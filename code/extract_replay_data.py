@@ -1,138 +1,138 @@
-#from IPython import embed
-
-import json
+import csv
 import spawningtool
+import sc2reader
 import sys
 import os
 import numpy as np
+import ipdb
+import plugins
 from spawningtool.parser import GameTimeline
 
-#Argument 1: replay directory (source)
-#Argument 2: json directory (target)
-
-
-
-#unit_dict should eventually be made into a global variable across the whole project
-unit_dict = {   'Probe':            0,
-                'MothershipCore':   1,
-                'Mothership':       2, 
-                'Zealot':           3,
-                'Stalker':          4,
-                'Sentry':           5,
-                'HighTemplar':      6,
-                'DarkTemplar':      7,
-                'Archon':           8,
-                'Immortal':         9,
-                'Colossus':         10,
-                'Observer':         11,
-                'Warp Prism':       12,
-                'Phoenix':          13,
-                'Void Ray':         14,
-                'Oracle':           15,
-                'Carrier':          16,
-                'Tempest':          17,
-                'Nexus':            18,
-                'Pylon':            19,
-                'Assimilator':      20,
-                'Gateway':          21,
-                'Forge':            22,
-                'CyberneticsCore':  23,
-                'PhotonCannon':     24,
-                'RoboticsFacility': 25,    
-                'Stargate':         26,
-                'TwilightCouncil':  27,
-                'RoboticsBay':      28,
-                'FleetBeacon':      29,
-                'TemplarArchives':  30,
-                'DarkShrine':       31,
+unit_dict = {   'Probe':            [0, [50,0,1]],
+                'MothershipCore':   [1, [100,100,2]],
+                'Mothership':       [2, [400,400,8]],
+                'Zealot':           [3, [100,0,2]],
+                'Stalker':          [4, [125,50,2]],
+                'Sentry':           [5, [50,100,2]],
+                'HighTemplar':      [6, [50,150,2]],
+                'DarkTemplar':      [7, [125,125,2]],
+                'Archon':           [8, [175,275,4]],
+                'Immortal':         [9, [250,100,4]],
+                'Colossus':         [10,[300,200,6]],
+                'Observer':         [11,[25,75,1]],
+                'Warp Prism':       [12,[200,0,2]],
+                'Phoenix':          [13,[150,100,2]],
+                'Void Ray':         [14,[250,150,4]],
+                'Oracle':           [15,[150,150,3]],
+                'Carrier':          [16,[350,250,6]],
+                'Tempest':          [17,[300,200,4]],
+                'PhotonCannon':     [18,[150,0,0]],
+                'Nexus':            [19,[0,0,0]],
+                'Pylon':            [20,[0,0,0]],
+                'Assimilator':      [21,[0,0,0]],
+                'Gateway':          [22,[0,0,0]],
+                'Forge':            [23,[0,0,0]],
+                'CyberneticsCore':  [24,[0,0,0]],
+                'RoboticsFacility': [25,[0,0,0]],   
+                'Stargate':         [26,[0,0,0]],
+                'TwilightCouncil':  [27,[0,0,0]],
+                'RoboticsBay':      [28,[0,0,0]],
+                'FleetBeacon':      [29,[0,0,0]],
+                'TemplarArchives':  [30,[0,0,0]],
+                'DarkShrine':       [31,[0,0,0]],
             }
 
 
-def time_string_to_decimals(time_string):
-    fields = time_string.split(":")
-    hours = fields[0] if len(fields) > 0 else 0.0
-    minutes = fields[1] if len(fields) > 1 else 0.0
-    seconds = fields[2] if len(fields) > 2 else 0.0
-
-    return (float(hours) + (float(minutes) / 60.0) + (float(seconds) / pow(60.0, 2)))
-
-
-def extract(replay_file,player_number):
+def extract(replay_file,destination,player_number):
     '''
     The 'extract' function takes (1) a replay file and (2) a player number and
     returns the observation vector for that game and that player.
 
     '''
-    replay_data=spawningtool.parser.parse_replay(replay_file)
 
-    player1_buildOrder = replay_data['players'][player_number]['buildOrder']
+    sc2reader_replay=sc2reader.load_replay(replay_file)
 
-    intervals = np.arange(.5,10.5,0.5)
-                            # The 'intervals' array gives the starting/stopping times for each 
-                            #   interval (in decimal: e.g. 3:30 = 3.50). The 'while' loop below
-                            #   uses this array to check which interval the current game time is assigned to.
+    plugins.EngagementTracker()(sc2reader_replay)
+
+    engagements = sc2reader_replay.eblob
+
+    unit_data=plugins.unit_data['HotS']
+
+    ipdb.set_trace()
+
+    # Extract build order data from spawningtool
+    replay_data = spawningtool.parser.parse_replay(replay_file)
+
+    buildOrder = replay_data['players'][player_number]['buildOrder']
     
-    interval_observation = np.zeros([1,len(unit_dict)],dtype=int)
-                            # Initialize the interval observation array. This is the observation vector
-                            #   for an individual 30-second interval. It will be re-initialized in the
-                            #   while loop
-
-    total_observations = np.zeros([len(intervals),len(unit_dict)],dtype=int)
-
-    time = 0
+    # Initialize the interval observation array. This is the observation vector
+    # for a single slice in starcraft time
+    observation = [0]*len(unit_dict)
     
-    build_index = 0         # The build index is the index of the build command, 
-                            #   where build index=0 is the 0th action taken in the build order
+    # The build index is the index of the build command, 
+    # where build index=0 is the 0th action taken in the build order
+    build_index = 0
 
-    interval_index = 0      # The interval index is the index of the current 30 second interval.
-                            #   if interval index=0, the current build command is happening between 
-                            #   0 and 30 seconds in the game. Corresponds to 'intervals' array.
+    total_observations = [None]*(len(buildOrder))
+    probe_count = 0
+    army_value = 0
+    for x in range(0,len(buildOrder)):
+        time = (buildOrder[build_index]['time'])
+        # Add the current build command to this interval's observation vector
+        current_unit_str = str(buildOrder[build_index]['name'])
 
-    while(time<10.00):
-
-        time = time_string_to_decimals(player1_buildOrder[build_index]['time'])
-
-        if( time > intervals[interval_index] ):
-            total_observations[interval_index,:]=interval_observation
-                            # Add the previous interval's observation vector to 'total_observations'
-
-            interval_index+=1
-                            # Increment 'interval_index' when the interval changes
-
-            interval_observation = np.zeros([1,len(unit_dict)],dtype=int) 
-                            # Re-initialize the interval observation array when the interval changes
-            
-        current_unit_str = str(player1_buildOrder[build_index]['name'])
-                            # Add the current build command to this interval's observation vector
-
+        # This 'try' statement checks to see if the current_unit_str is a unit/building,
+        # or another type (upgrade, etc.), and increments the corresponding bin by +1 if valid
         try:
-            current_unit_bin = unit_dict[current_unit_str]
-            interval_observation[0,current_unit_bin]=1 #set to 1 to indicate the unit was built vs not built
+            current_unit = unit_dict[current_unit_str];
+            current_unit_bin = current_unit[0]
+            observation[current_unit_bin]+=1
+            
+            if current_unit_str =='Probe':
+                probe_count += 1
+            else:
+                army_value += (current_unit[1][0] + current_unit[1][1]) #sum the current unit's mineral and gas value to get army value
+
         except KeyError:
             pass
-                            # This 'try' statement checks to see if the current_unit_str is a unit/building,
-                            # or another type (upgrade, etc.)
 
-        build_index+=1      # Increment to the next build event (build index)
+        total_observations[build_index]=[time,army_value,probe_count,list(observation[18:])]
 
-    return total_observations
+        # Increment to the next build event (build index)
+        build_index+=1      
+    
+    # Generate the filename to save as .csv
+    filename_withExt = replay_file.split('/')[-1]
+    filename = filename_withExt.split('.')[0]
+    filename_withDest = destination+filename
+
+    # Write the .csv file
+    with open(filename_withDest+'(P'+str(player_number)+').csv', 'wb') as csvfile:
+        csvwriter = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+        csvwriter.writerows(total_observations)
 
 
 def main():
-    
-    replay_dir = sys.argv[1]
-    json_dir = sys.argv[2]
+    test_replays=    ['/home/michael/projects/sc2centaur/data/replays/4gate_5.SC2Replay',
+                      '/home/michael/projects/sc2centaur/data/replays/pvz-3gate-pressure.SC2Replay']
 
+    if(len(sys.argv)==1):
+        training_replays=['/home/michael/projects/sc2centaur/data/replays/4gate_1.SC2Replay',
+                          '/home/michael/projects/sc2centaur/data/replays/4gate_2.SC2Replay',
+                          '/home/michael/projects/sc2centaur/data/replays/4gate_3.SC2Replay',
+                          '/home/michael/projects/sc2centaur/data/replays/4gate_4.SC2Replay',
+                          '/home/michael/projects/sc2centaur/data/replays/self-generated/AI_4gate_opposed.SC2Replay',
+                          '/home/michael/projects/sc2centaur/data/replays/self-generated/AI_4gate_unopposed.SC2Replay',
+                          '/home/michael/projects/sc2centaur/data/replays/self-generated/AI_robo_attack1.SC2Replay']
+        destination='/home/michael/projects/sc2centaur/data/training_data/'
+    else:
+        training_replays = sys.argv[1]
+        destination = sys.argv[2]
 
-    for subdir, dirs, files in os.walk(replay_dir):
-        for file in files:
-            
-            replay_file = os.path.join(subdir, file)
+    for replay_file in training_replays:
+        extract(replay_file,destination,1)
+        extract(replay_file,destination,2)
 
-            #player1_observations = extract(replay_file,1)
-            player2_observations = extract(replay_file,2)
-
-            print(player2_observations)
 
 if __name__ == '__main__':
     main()
