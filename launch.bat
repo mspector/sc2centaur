@@ -1,1 +1,0 @@
-python C:\sc2centaur\src\pyhook.pyw
