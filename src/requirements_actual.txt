@@ -1,0 +1,4 @@
+requirements_actual
+sc2reader
+numpy
+opencv
