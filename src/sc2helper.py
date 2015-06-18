@@ -7,7 +7,7 @@ import csv
 import datetime
 import math
 import operator
-import ipdb
+#import ipdb
 def time_string_to_decimals(hhmmss):
     [minutes, seconds] = [int(x) for x in hhmmss.split(':')]
     time = datetime.timedelta(minutes=minutes, seconds=seconds)
