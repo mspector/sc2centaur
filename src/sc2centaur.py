@@ -15,7 +15,7 @@ from custom_drawMatches import drawMatches
 
 class SC2C(object):
 
-    def __init__(self,training_file_directory):
+    def __init__(self,training_file_directory,templates_directory,numbers_directory):
         "SC2C object initialized..."
         files=[]
         for dirpath,_,filenames in os.walk(training_file_directory):
@@ -24,8 +24,19 @@ class SC2C(object):
 
         self.training_data = sc2helper.csv_read(files)
         self.n_games = len(self.training_data)
+        
+        self.templates=[]
+        for dirpath,_,filenames in os.walk(templates_directory):
+            for f in filenames:
+                im = cv2.imread(os.path.abspath(os.path.join(dirpath, f)))
+                self.templates.append(im)
+
+        self.numbers=[]
+        for dirpath,_,filenames in os.walk(numbers_directory):
+            for f in filenames:
+                im = cv2.imread(os.path.abspath(os.path.join(dirpath, f)))
+                self.numbers.append(im)
         self.time = None
-        print(files)
 
     def get_time_slice(time):
         # For each game in self.training_data:
@@ -47,13 +58,15 @@ class SC2C(object):
         engagement_reader(replay)
         army_reader(replay)
 
+    def read_hud(self,path):
+        print("Reading HUD...")
 
     def find_buildings(self,path):
         print("Identifying buildings...")
         self.nexus = False
         MIN_MATCH_COUNT = 15
 
-        img1 = cv2.imread('C:\\sc2centaur\\data\\Assimilator.jpg',0)          # queryImage
+        img1 = cv2.imread('C:\\sc2centaur\\data\\Nexus_Template.jpg',0)          # queryImage
         img2 = cv2.imread(path,0) # trainImage
 
         # Initiate SIFT detector

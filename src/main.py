@@ -16,12 +16,14 @@ from sc2centaur import *
 import keyboardhook
 
 def main(): 
-    training_directory="/home/michael/projects/sc2centaur/data/training_data/"
+    training_directory ="C:\\sc2centaur\\data\\training_data"
+    templates_directory="C:\\sc2centaur\\data\\templates"
+    numbers_directory  ="C:\\sc2centaur\\data\\numbers"
     observation = ['6:58', '[13, 0, 0, 4, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6, 1, 4, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]']
     key = None
 
     hook = keyboardhook.GlobalInput()
-    sc2c = SC2C(training_directory)
+    sc2c = SC2C(training_directory,templates_directory,numbers_directory)
 
     while key != 'Snapshot':
         key = hook.getKey()
