@@ -34,7 +34,7 @@ class SC2C(object):
         self.numbers=[]
         for dirpath,_,filenames in os.walk(numbers_directory):
             for f in filenames:
-                im = cv2.imread(os.path.abspath(os.path.join(dirpath, f)))
+                im = cv2.imread(os.path.abspath(os.path.join(dirpath, f)),0)
                 self.numbers.append(im)
 
         self.time = None
@@ -77,19 +77,54 @@ class SC2C(object):
     def read_time(self,path):
         print("Reading game time...")
         img = cv2.imread(path,0) # total image
-        x_max = 330
+        x_max = 290
         x_min = 275
         y_max = 794
         y_min = 779
-        time_img = img[y_min:y_max,x_min:x_max]
+        minute_img = img[y_min:y_max,x_min:x_max]
+        
+        x_max = 310
+        x_min = 295
+        second1_img= img[y_min:y_max,x_min:x_max]
 
-        x_max = 290
-        x_min = 275
-        cv2.imshow("2",self.numbers[0])
+        x_max = 327
+        x_min = 312
+        second2_img= img[y_min:y_max,x_min:x_max]
+
+        """
+        cv2.imshow("number",self.numbers[0])
         cv2.waitKey(0)
         cv2.destroyAllWindows()
-        result = cv2.matchTemplate(time_img,self.numbers[0],cv2.TM_CCOEFF_NORMED)
-        return time_img
+        """
+        minute  = None
+        second1 = None
+        second2 = None
+
+        minute_resultMax  = 0
+        second1_resultMax = 0
+        second2_resultMax = 0
+
+        print("Number:"+str(self.numbers[2]))
+        print("Image number:" +str(second1_img))
+
+        for i in range(0,10):
+            minute_result  = abs(max(cv2.matchTemplate(minute_img,self.numbers[i],cv2.TM_CCOEFF_NORMED)[0]))
+            second1_result = abs(max(cv2.matchTemplate(second1_img,self.numbers[i],cv2.TM_CCOEFF_NORMED)[0]))
+            second2_result = abs(max(cv2.matchTemplate(second2_img,self.numbers[i],cv2.TM_CCOEFF_NORMED)[0]))
+            print(minute_result)
+            if minute_result > minute_resultMax:
+                minute_resultMax = minute_result
+                minute = i
+
+            if second1_result > second1_resultMax:
+                second1_resultMax = second1_result
+                second1 = i
+
+            if second2_result > second2_resultMax:
+                second2_resultMax = second2_result
+                second2 = i
+
+        print("Time---> "+str(minute)+":"+str(second1)+str(second2))
 
 
 

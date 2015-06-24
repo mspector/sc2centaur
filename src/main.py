@@ -31,7 +31,7 @@ def main():
     print('success')
     #nexus_identified = sc2c.find_nexus('observations\\observation.bmp')
     nexus_identified=False
-    time = sc2c.read_time('data\\screenshots\\gateway_building_lores.jpg')
+    time = sc2c.read_time('data\\screenshots\\assimilator_lores.jpg')
 
     #time = sc2c.get_game_time()
     time = "<insert time here>"
@@ -40,10 +40,9 @@ def main():
     else:
         print("No expansion detected.")
 
-    print np.shape(time)
-    cv2.imshow("time",time)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.imshow("time",time)
+    #cv2.waitKey(0)
+    #cv2.destroyAllWindows()
     #test_replay = '/home/michael/projects/sc2centaur/data/replays/4gate_1.SC2Replay'
     #sc2c.test_plugins(test_replay)
 
