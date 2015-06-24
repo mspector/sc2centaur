@@ -36,6 +36,7 @@ class SC2C(object):
             for f in filenames:
                 im = cv2.imread(os.path.abspath(os.path.join(dirpath, f)))
                 self.numbers.append(im)
+
         self.time = None
 
     def get_time_slice(time):
@@ -60,9 +61,43 @@ class SC2C(object):
 
     def read_hud(self,path):
         print("Reading HUD...")
+        img = cv2.imread(path,0) # total image
+        x_max = 330
+        x_min = 275
+        y_max = 795
+        y_min = 775
+        hud = img[y_min:y_max,x_min:x_max]
+        return hud
 
-    def find_buildings(self,path):
-        print("Identifying buildings...")
+
+
+
+
+
+    def read_time(self,path):
+        print("Reading game time...")
+        img = cv2.imread(path,0) # total image
+        x_max = 330
+        x_min = 275
+        y_max = 794
+        y_min = 779
+        time_img = img[y_min:y_max,x_min:x_max]
+
+        x_max = 290
+        x_min = 275
+        cv2.imshow("2",self.numbers[0])
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        result = cv2.matchTemplate(time_img,self.numbers[0],cv2.TM_CCOEFF_NORMED)
+        return time_img
+
+
+
+
+
+
+    def find_nexus(self,path):
+        print("Identifying nexus...")
         self.nexus = False
         MIN_MATCH_COUNT = 15
 
