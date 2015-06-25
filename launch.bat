@@ -1,0 +1,1 @@
+python C:\sc2centaur\src\main.py
