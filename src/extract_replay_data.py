@@ -4,11 +4,11 @@ import sc2reader
 import sys
 import os
 import numpy as np
-import ipdb
+#import ipdb
 import plugins
 from spawningtool.parser import GameTimeline
 
-unit_dict = {   'Probe':            [0, [50,0,1]],
+unit_dict_protoss = {   'Probe':            [0, [50,0,1]],
                 'MothershipCore':   [1, [100,100,2]],
                 'Mothership':       [2, [400,400,8]],
                 'Zealot':           [3, [100,0,2]],
@@ -42,6 +42,11 @@ unit_dict = {   'Probe':            [0, [50,0,1]],
                 'DarkShrine':       [31,[0,0,0]],
             }
 
+unit_dict_zerg = {   'Extractor':            [0, [50,0,0]],
+                'Hatchery':   [1, [300,0,0]],
+                'SpawningPool':       [2, [200,0,0]],
+
+            }
 
 def extract(replay_file,destination,player_number):
     '''
@@ -49,6 +54,8 @@ def extract(replay_file,destination,player_number):
     returns the observation vector for that game and that player.
 
     '''
+
+    unit_dict = unit_dict_zerg
 
     sc2reader_replay=sc2reader.load_replay(replay_file)
 
@@ -113,6 +120,8 @@ def extract(replay_file,destination,player_number):
 
 
 def main():
+    
+    """ Protoss stuff
     test_replays=    ['/home/michael/projects/sc2centaur/data/replays/4gate_5.SC2Replay',
                       '/home/michael/projects/sc2centaur/data/replays/pvz-3gate-pressure.SC2Replay']
 
@@ -133,6 +142,11 @@ def main():
         extract(replay_file,destination,1)
         extract(replay_file,destination,2)
 
+    """
+
+    test_replay='C:\\sc2centaur\\data\\test_replay_pvz.SC2Replay'
+    extract(test_replay,'C:\\sc2centaur\\data',1)
+    extract(test_replay,'C:\\sc2centaur\\data',2)
 
 if __name__ == '__main__':
     main()
