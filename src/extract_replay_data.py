@@ -6,6 +6,7 @@ import os
 import numpy as np
 #import ipdb
 import plugins
+from sc2helper import *
 from spawningtool.parser import GameTimeline
 
 unit_dict_protoss = {   'Probe':            [0, [50,0,1]],
@@ -42,13 +43,15 @@ unit_dict_protoss = {   'Probe':            [0, [50,0,1]],
                 'DarkShrine':       [31,[0,0,0]],
             }
 
-unit_dict_zerg = {   'Extractor':            [0, [50,0,0]],
-                'Hatchery':   [1, [300,0,0]],
-                'SpawningPool':       [2, [200,0,0]],
+unit_dict_zerg = {   'Extractor':            [0, [0,0,0]],
+                'Hatchery':   [1, [0,0,0]],
+                'SpawningPool':       [2, [0,0,0]],
+                'Drone': [3, [50,0,1]],
+                'Zergling': [4, [50,0,1]]
 
             }
 
-def extract(replay_file,destination,player_number):
+def extract(replay_file,player_number,label):
     '''
     The 'extract' function takes (1) a replay file and (2) a player number and
     returns the observation vector for that game and that player.
@@ -65,7 +68,7 @@ def extract(replay_file,destination,player_number):
 
     unit_data=plugins.unit_data['HotS']
 
-    ipdb.set_trace()
+    #ipdb.set_trace()
 
     # Extract build order data from spawningtool
     replay_data = spawningtool.parser.parse_replay(replay_file)
@@ -84,7 +87,10 @@ def extract(replay_file,destination,player_number):
     probe_count = 0
     army_value = 0
     for x in range(0,len(buildOrder)):
+        #TODO: Add a "loading" bar... figure out how to do this
         time = (buildOrder[build_index]['time'])
+        time = time_string_to_decimals(time)
+
         # Add the current build command to this interval's observation vector
         current_unit_str = str(buildOrder[build_index]['name'])
 
@@ -95,7 +101,7 @@ def extract(replay_file,destination,player_number):
             current_unit_bin = current_unit[0]
             observation[current_unit_bin]+=1
             
-            if current_unit_str =='Probe':
+            if current_unit_str =='Drone':
                 probe_count += 1
             else:
                 army_value += (current_unit[1][0] + current_unit[1][1]) #sum the current unit's mineral and gas value to get army value
@@ -103,13 +109,21 @@ def extract(replay_file,destination,player_number):
         except KeyError:
             pass
 
-        total_observations[build_index]=[time,army_value,probe_count,list(observation[18:])]
+        total_observations[build_index]=[time,army_value,probe_count,list(observation[0:3]),label]
 
         # Increment to the next build event (build index)
         build_index+=1      
     
+
+
+    return total_observations
+
+    ## RETURN STATEMENT ABOVE RENDERS CODE BELOW USELESS
+
+
+    '''
     # Generate the filename to save as .csv
-    filename_withExt = replay_file.split('/')[-1]
+    filename_withExt = replay_file.split('\\')[-1]
     filename = filename_withExt.split('.')[0]
     filename_withDest = destination+filename
 
@@ -117,7 +131,31 @@ def extract(replay_file,destination,player_number):
     with open(filename_withDest+'(P'+str(player_number)+').csv', 'wb') as csvfile:
         csvwriter = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
         csvwriter.writerows(total_observations)
+    '''
 
+def align(total_observations):
+    
+    aligned_observations = [None]*total_observations[-1][0]
+    n=0
+    current_observation = total_observations[n]
+    next_observation = list(total_observations[n+1])
+
+    #ipdb.set_trace()
+
+    for current_time in range(0,total_observations[-1][0]):
+        if current_time >= int(next_observation[0]):
+            n+=1
+            current_observation = list(next_observation)
+            try: 
+                next_observation=list(total_observations[n+1])
+            except IndexError:
+                pass
+
+        #print(list(current_observation[1:]))
+        #print(current_observation[3])
+        aligned_observations[current_time]=([current_time]+list(current_observation[1:]))
+        #print(aligned_observations[current_time])
+    return aligned_observations
 
 def main():
     
@@ -144,9 +182,11 @@ def main():
 
     """
 
-    test_replay='C:\\sc2centaur\\data\\test_replay_pvz.SC2Replay'
-    extract(test_replay,'C:\\sc2centaur\\data',1)
-    extract(test_replay,'C:\\sc2centaur\\data',2)
+    #test_replay='C:\\sc2centaur\\data\\replays\\4gate_1.SC2Replay'
+    #extract(test_replay,'C:\\sc2centaur\\data\\training_data\\',1)
+    test_replay2='C:\\sc2centaur\\data\\replays\\pvz-3gate-pressure.SC2Replay'
+    #destination ='C:\\sc2centaur\\data\\training_data\\'
+    extract(test_replay2,1)
 
 if __name__ == '__main__':
     main()

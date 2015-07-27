@@ -74,7 +74,7 @@ class GlobalInput():
                 memdc.BitBlt((0, 0), (width, height), srcdc, (left, top), win32con.SRCCOPY)
                 bmp.SaveBitmapFile(memdc, 'observations\observation'+'.bmp')
                 self.bmpfile = memdc
-                print("image collected")     
+                    
             return True
 
         hm = pyHook.HookManager()
