@@ -219,6 +219,7 @@ class SC2C(object):
 
         return [minute,second1,second2]
 
+    '''
     def find_nexus(self,path):
         print("Identifying nexus...")
         self.nexus = False
@@ -276,7 +277,7 @@ class SC2C(object):
 
         #plt.imshow(img3, 'gray'),plt.show()
 
-
+'''
     def get_statistics(self,observation_label):
         """
         Input:  a label of a build (e.g., "speedling rush")

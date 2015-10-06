@@ -20,9 +20,9 @@ def main():
     print("Loading... Please wait.")
     
     #### Set data locations
-    training_directory ="C:\\sc2centaur\\data\\training_replays"
-    templates_directory="C:\\sc2centaur\\data\\templates"
-    numbers_directory  ="C:\\sc2centaur\\data\\numbers"
+    training_directory ="C:\\Users\\Michael\\Documents\\projects\\sc2centaur\\data\\training_replays"
+    templates_directory="C:\\Users\\Michael\\Documents\\projects\\sc2centaur\\data\\templates"
+    numbers_directory  ="C:\\Users\\Michael\\Documents\\projects\\sc2centaur\\data\\numbers"
     
     #### Initialize class instances
     sc2c = SC2C(training_directory,templates_directory,numbers_directory)
