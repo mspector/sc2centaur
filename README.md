@@ -1,2 +1,2 @@
 # sc2centaur
-This is a readme.
+This is the branching tutorial.
