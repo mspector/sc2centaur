@@ -100,13 +100,6 @@ class sc2centaur(object):
         hud_globalMax = 0
         feature_id = None
         for unit_name in self.feature_dictionary.keys():
-            '''
-            I'm completely reworking how the "feature dictionary" is used.
-            My goal is to have everything refer to a single huge feature_dictionary, held in the main.py script .
-            Right now, I'm changing this for loop to loop over the keys in the dictionary.
-            This will require me to design the "self.templates" initialization to account for it...
-            '''
-            #ipdb.set_trace()
 
             template = self.template_dictionary[unit_name]
             hud_result  = cv2.matchTemplate(hud_img,template,cv2.TM_CCOEFF_NORMED)
