@@ -1,2 +1,2 @@
-# sc2centaur
-Version 0.2
+This is the branching tutorial.
+
