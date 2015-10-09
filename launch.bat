@@ -1,1 +1,1 @@
-python C:\sc2centaur\src\main.py
+python C:\Users\Michael\Documents\projects\sc2centaur\src\main.py

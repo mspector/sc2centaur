@@ -1,18 +1,16 @@
 """
-SC2Centaur class
-
-Methods:
-classify
+==================================
+Starcraft Assistive AI: sc2centaur class
+==================================
 
 """
-#import ipdb
+import ipdb
 import numpy as np
 import cv2
 import os
 import sc2helper
 import sc2reader
 import plugins
-import extract_replay_data
 from os import path
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -20,37 +18,25 @@ import matplotlib.pyplot as plt
 from custom_drawMatches import drawMatches
 
 
-class SC2C(object):
 
-    def __init__(self,training_file_directory,templates_directory,numbers_directory):
-        "SC2C object initialized..."
+class sc2centaur(object):
 
-        self.training_data=[]
-        for dirpath,_,filenames in os.walk(training_file_directory):
-            for f in filenames:
-                filepath = os.path.abspath(os.path.join(dirpath, f))
-                #print(filepath)
-                label = f
-                data = extract_replay_data.extract(filepath,1,label)
-                aligned_data = extract_replay_data.align(data)
-                self.training_data.append(aligned_data)
+    def __init__(self,training_data,numbers_directory,feature_dictionary,template_dictionary):
+        "sc2centaur object initialized..."
 
 
-        #self.training_data = sc2helper.csv_read(files)
+        self.training_data=training_data
 
         self.n_games = len(self.training_data)
-        
-        self.templates=[]
-        for dirpath,_,filenames in os.walk(templates_directory):
-            for f in filenames:
-                im = cv2.imread(os.path.abspath(os.path.join(dirpath, f)),0)
-                self.templates.append(im)
 
         self.numbers=[]
         for dirpath,_,filenames in os.walk(numbers_directory):
             for f in filenames:
                 im = cv2.imread(os.path.abspath(os.path.join(dirpath, f)),0)
                 self.numbers.append(im)
+
+        self.feature_dictionary=feature_dictionary
+        self.template_dictionary=template_dictionary
 
         self.time = None
         
@@ -72,6 +58,151 @@ class SC2C(object):
         return label
         
 
+
+    def plot_statistics(self,army_stats,worker_stats):
+        '''
+        Plots stats. Right now only plots army value over time.
+        '''  
+             
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        for game_idx in range(0,len(army_stats)):
+            ax.scatter(range(0,len(army_stats[game_idx])), army_stats[game_idx])
+
+        ax.set_xlabel('Game Time (sec)')
+        ax.set_ylabel('Army Value (minerals + gas)')
+
+        return plt
+
+
+    def test_plugins(self,path_to_replay):
+        replay=sc2reader.load_replay(path_to_replay)
+
+        army_reader = plugins.ArmyTracker()
+        engagement_reader = plugins.EngagementTracker()
+
+        engagement_reader(replay)
+        army_reader(replay)
+
+    def read_hud(self,path):
+        img = cv2.imread(path,0) # total image
+
+        x_min = 2740
+        x_max = 2980
+        y_min = 898
+        y_max = 917
+
+        hud_img = img[y_min:y_max,x_min:x_max]
+
+        #cv2.imshow("hud",hud_img)
+
+        hud_globalMax = 0
+        feature_id = None
+        for unit_name in self.feature_dictionary.keys():
+
+            template = self.template_dictionary[unit_name]
+            hud_result  = cv2.matchTemplate(hud_img,template,cv2.TM_CCOEFF_NORMED)
+            _, hud_max_val, _, _ = cv2.minMaxLoc(hud_result)
+            
+            if hud_max_val > hud_globalMax:
+                hud_globalMax=hud_max_val
+                feature_id = unit_name
+                print('CURRENT BEST MATCH: '+unit_name)
+                print('SCORE: '+str(hud_globalMax))
+        try:        
+            feature_index = self.feature_dictionary[unit_name][0]
+        except KeyError:
+            feature_id = None
+            feature_index = None
+
+        return feature_id,feature_index
+
+    def read_time(self,path):
+
+        img = cv2.imread(path,0) # total image
+
+        x_min = 2195
+        x_max = 2208
+        y_min = 783
+        y_max = 794
+        minute_img = img[y_min:y_max,x_min:x_max]
+        
+        x_min = 2216
+        x_max = 2229
+        second1_img= img[y_min:y_max,x_min:x_max]
+
+        x_min = 2232
+        x_max = 2245
+        second2_img= img[y_min:y_max,x_min:x_max]
+
+        minute  = None
+        second1 = None
+        second2 = None
+
+        minute_globalMax  = 0
+        second1_globalMax = 0
+        second2_globalMax = 0
+
+        for i in range(0,10):
+            minute_result  = cv2.matchTemplate(minute_img,self.numbers[i],cv2.TM_CCOEFF_NORMED)
+            second1_result = cv2.matchTemplate(second1_img,self.numbers[i],cv2.TM_CCOEFF_NORMED)
+            second2_result = cv2.matchTemplate(second2_img,self.numbers[i],cv2.TM_CCOEFF_NORMED)
+
+            minute_min_val, minute_max_val, a, b = cv2.minMaxLoc(minute_result)
+            second1_min_val, second1_max_val, a, b = cv2.minMaxLoc(second1_result)
+            second2_min_val, second2_max_val, a, b = cv2.minMaxLoc(second2_result)
+            
+            '''
+            print(minute_result)
+            print("Number:"+str(self.numbers[i])+"\n")
+            print(np.shape(self.numbers[i]))
+            print("Image number:" +str(minute_img)+"\n")
+            print(np.shape(minute_img))
+            '''
+
+            if minute_max_val > minute_globalMax:
+                minute_globalMax = minute_max_val
+                minute = i
+
+            if second1_max_val > second1_globalMax:
+                second1_globalMax = second1_max_val
+                second1 = i
+
+            if second2_max_val > second2_globalMax:
+                second2_globalMax = second2_max_val
+                second2 = i
+
+        #print("Time---> "+str(minute)+":"+str(second1)+str(second2))
+
+        return [minute,second1,second2]
+
+
+    def get_statistics(self,observation_label):
+        """
+        Input:  a label of a build (e.g., "speedling rush")
+        Output: two arrays: one with the army values over time, and the other 
+                with the worker count over time for that build
+        """
+
+        total_army_stats = []
+        total_worker_stats = []
+        for game_idx in range(0,len(self.training_data)):
+            game_label = self.training_data[game_idx][0][-1]
+            army_stats = []
+            worker_stats = []
+            if game_label == observation_label:
+                for observation in self.training_data[game_idx]:
+                    army_stats.append(observation[1])
+                    worker_stats.append(observation[2])
+            total_army_stats.append(army_stats)
+            total_worker_stats.append(worker_stats)
+        return total_army_stats,total_worker_stats
+    
+
+    '''
+    I'm not sure which of these classes below are actually used anymore
+    '''
     def get_feature(self,f):
         all_features=[]
         for game in range(0,len(self.training_data)):
@@ -104,127 +235,14 @@ class SC2C(object):
 
         plt.show()
 
-    def plot_statistics(self,army_stats,worker_stats):
-        '''
-        Plots stats. Right now only plots army value over time.
-        '''  
-             
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        
-        for game_idx in range(0,len(army_stats)):
-            ax.scatter(range(0,len(army_stats[game_idx])), army_stats[game_idx])
 
-        ax.set_xlabel('Game Time (sec)')
-        ax.set_ylabel('Army Value (minerals + gas)')
-
-        return plt
-
-
-    def test_plugins(self,path_to_replay):
-        replay=sc2reader.load_replay(path_to_replay)
-
-        army_reader = plugins.ArmyTracker()
-        engagement_reader = plugins.EngagementTracker()
-
-        engagement_reader(replay)
-        army_reader(replay)
-
-    def read_hud(self,path,feature_dictionary):
-        #ipdb.set_trace()
-        img = cv2.imread(path,0) # total image
-
-        x_min = 570
-        x_max = 760
-        y_min = 630
-        y_max = 670
-
-        hud_img = img[y_min:y_max,x_min:x_max]
-
-        #cv2.imshow("hud",hud_img)
-        #cv2.imshow("template",self.templates[2])
-
-        hud_globalMax = 0
-        feature_index = None
-        for i in range(0,3):
-            hud_result  = cv2.matchTemplate(hud_img,self.templates[i],cv2.TM_CCOEFF_NORMED)
-            _, hud_max_val, _, _ = cv2.minMaxLoc(hud_result)
-            
-            if hud_max_val > hud_globalMax:
-                hud_globalMax=hud_max_val
-                feature_index = i
-        try:        
-            feature_id = feature_dictionary[feature_index]
-        except KeyError:
-            feature_id = None
-            feature_index = None
-
-        return feature_id,feature_index
-
-    def read_time(self,path):
-
-        img = cv2.imread(path,0) # total image
-
-        x_min = 192
-        x_max = 207
-        y_min = 552
-        y_max = 567
-        minute_img = img[y_min:y_max,x_min:x_max]
-        
-        x_min = 192+18
-        x_max = 207+18
-        second1_img= img[y_min:y_max,x_min:x_max]
-
-        x_min = 192+18+15
-        x_max = 207+18+15
-        second2_img= img[y_min:y_max,x_min:x_max]
-
-        minute  = None
-        second1 = None
-        second2 = None
-
-        minute_globalMax  = 0
-        second1_globalMax = 0
-        second2_globalMax = 0
-
-        for i in range(0,10):
-            minute_result  = cv2.matchTemplate(minute_img,self.numbers[i],cv2.TM_CCOEFF_NORMED)
-            second1_result = cv2.matchTemplate(second1_img,self.numbers[i],cv2.TM_CCOEFF_NORMED)
-            second2_result = cv2.matchTemplate(second2_img,self.numbers[i],cv2.TM_CCOEFF_NORMED)
-
-            minute_min_val, minute_max_val, a, b = cv2.minMaxLoc(minute_result)
-            second1_min_val, second1_max_val, a, b = cv2.minMaxLoc(second1_result)
-            second2_min_val, second2_max_val, a, b = cv2.minMaxLoc(second2_result)
-            '''
-            print(minute_result)
-            print("Number:"+str(self.numbers[i])+"\n")
-            print(np.shape(self.numbers[i]))
-            print("Image number:" +str(minute_img)+"\n")
-            print(np.shape(minute_img))
-            '''
-
-            if minute_max_val > minute_globalMax:
-                minute_globalMax = minute_max_val
-                minute = i
-
-            if second1_max_val > second1_globalMax:
-                second1_globalMax = second1_max_val
-                second1 = i
-
-            if second2_max_val > second2_globalMax:
-                second2_globalMax = second2_max_val
-                second2 = i
-
-        #print("Time---> "+str(minute)+":"+str(second1)+str(second2))
-
-        return [minute,second1,second2]
-
+    '''
     def find_nexus(self,path):
         print("Identifying nexus...")
         self.nexus = False
         MIN_MATCH_COUNT = 15
 
-        img1 = cv2.imread('C:\\sc2centaur\\data\\Nexus_Template.jpg',0)          # queryImage
+        img1 = cv2.imread('C:\\sc2centaurentaur\\data\\Nexus_Template.jpg',0)          # queryImage
         img2 = cv2.imread(path,0) # trainImage
 
         # Initiate SIFT detector
@@ -276,24 +294,4 @@ class SC2C(object):
 
         #plt.imshow(img3, 'gray'),plt.show()
 
-
-    def get_statistics(self,observation_label):
-        """
-        Input:  a label of a build (e.g., "speedling rush")
-        Output: two arrays: one with the army values over time, and the other 
-                with the worker count over time for that build
-        """
-
-        total_army_stats = []
-        total_worker_stats = []
-        for game_idx in range(0,len(self.training_data)):
-            game_label = self.training_data[game_idx][0][-1]
-            army_stats = []
-            worker_stats = []
-            if game_label == observation_label:
-                for observation in self.training_data[game_idx]:
-                    army_stats.append(observation[1])
-                    worker_stats.append(observation[2])
-            total_army_stats.append(army_stats)
-            total_worker_stats.append(worker_stats)
-        return total_army_stats,total_worker_stats
+'''

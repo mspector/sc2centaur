@@ -86,7 +86,9 @@ class GlobalInput():
         hm.UnhookMouse()
         hm.UnhookKeyboard()
         return self.key      
- 
+
+
+#Running this module as a standalone script lets you test out the various things you can track. 
 if __name__ == "__main__":   
     t = GlobalInput()
     
