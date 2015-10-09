@@ -7,7 +7,7 @@ import csv
 import datetime
 import math
 import operator
-#import ipdb
+import cv2
 def time_string_to_decimals(hhmmss):
     [minutes, seconds] = [int(x) for x in hhmmss.split(':')]
     #time = datetime.timedelta(minutes=minutes, seconds=seconds)
@@ -59,3 +59,4 @@ def getResponse(neighbors):
             classVotes[response]=1
     sortedVotes = sorted(classVotes.iteritems(), key=operator.itemgetter(1), reverse=True)
     return sortedVotes[0][0]
+
