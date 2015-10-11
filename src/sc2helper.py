@@ -38,7 +38,7 @@ def euclideanDistance(instance1, instance2, length):
 def getNeighbors(trainingSet, testInstance, k):
     #ipdb.set_trace()
     distances = []
-    length = len(testInstance)-1
+    length = len(testInstance)-2 #subtract 2 because the last two indicies in testInstance aren't part of the feature vector
     for x in range(len(trainingSet)):
         dist = euclideanDistance(testInstance, trainingSet[x], length)
         distances.append((trainingSet[x], dist))

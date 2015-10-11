@@ -19,13 +19,13 @@ import keyboardhook
 import os
 import sys
 import data_extractor
-import ipdb
+#import ipdb
 
-feature_dictionary = {  #'Drone':            [0, [50,0,1]],
-                        'Extractor':        [0, [0,0,0]],
-                        'Hatchery':         [1, [0,0,0]],
-                        'SpawningPool':     [2, [0,0,0]]
-                        #'Zergling':         [4, [50,0,1]]
+feature_dictionary = {  'Drone':            [0, [50,0,1]],
+                        'Extractor':        [1, [0,0,0]],
+                        'Hatchery':         [2, [0,0,0]],
+                        'SpawningPool':     [3, [0,0,0]],
+                        'Zergling':         [4, [50,0,1]]
                         }   
 
 """
@@ -87,7 +87,7 @@ def main():
     hook = keyboardhook.GlobalInput()
     
     #### Initialize parameters
-    feature_vector = [0,0,0]
+    feature_vector = [0]*len(feature_dictionary)
     unlocked = True
     max_screenshots = 2
     screenshots_taken = 0

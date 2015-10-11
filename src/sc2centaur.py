@@ -4,7 +4,7 @@ Starcraft Assistive AI: sc2centaur class
 ==================================
 
 """
-import ipdb
+#import ipdb
 import numpy as np
 import cv2
 import os
@@ -41,12 +41,14 @@ class sc2centaur(object):
         self.time = None
         
     def classify(self,observation,k):
-        
+        #ipdb.set_trace()
         time = observation[0]
         test_feature_vector = [time]+observation[3]
         training_set = []
         
-        for game in self.training_data:
+        #This shouldn't be hardcoded in the future
+        race='Zerg'
+        for game in self.training_data[race]:
             training_feature_vector = [time]+game[time][3]+[game[time][4]]
             training_set.append(training_feature_vector)
         
@@ -108,8 +110,8 @@ class sc2centaur(object):
             if hud_max_val > hud_globalMax:
                 hud_globalMax=hud_max_val
                 feature_id = unit_name
-                print('CURRENT BEST MATCH: '+unit_name)
-                print('SCORE: '+str(hud_globalMax))
+                #print('CURRENT BEST MATCH: '+unit_name)
+                #print('SCORE: '+str(hud_globalMax))
         try:        
             feature_index = self.feature_dictionary[unit_name][0]
         except KeyError:
@@ -184,15 +186,19 @@ class sc2centaur(object):
         Output: two arrays: one with the army values over time, and the other 
                 with the worker count over time for that build
         """
-
         total_army_stats = []
         total_worker_stats = []
-        for game_idx in range(0,len(self.training_data)):
-            game_label = self.training_data[game_idx][0][-1]
+
+        #This shouldn't be hardcoded in the future
+        race = 'Zerg'
+
+        
+        for game_idx in range(0,len(self.training_data[race])):
+            game_label = self.training_data[race][game_idx][0][-1]
             army_stats = []
             worker_stats = []
             if game_label == observation_label:
-                for observation in self.training_data[game_idx]:
+                for observation in self.training_data[race][game_idx]:
                     army_stats.append(observation[1])
                     worker_stats.append(observation[2])
             total_army_stats.append(army_stats)
