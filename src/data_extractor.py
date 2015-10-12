@@ -6,6 +6,7 @@ import os
 import numpy as np
 import plugins
 import cv2
+#import ipdb
 from sc2helper import *
 from spawningtool.parser import GameTimeline
 
@@ -107,24 +108,29 @@ def align_replays(total_observations):
 
 def process_replays(replay_directory,feature_dictionary):
     
-    training_data=[]
+    #ipdb.set_trace()
+    training_data={'Protoss':[], 'Zerg':[], 'Terran':[]}
     data_directory = os.path.join(dir,'..\\data\\training_data')
 
     for dirpath,_,filenames in os.walk(replay_directory):
         for f in filenames:
             filepath = os.path.abspath(os.path.join(dirpath, f))
-            print(filepath)
+            #print(filepath)
             
-            label = f.split('.')[0]
+            #Replays should be in the following format:
+            #X-build.SC2Replay
+            #Where X is P, Z, or T 
+            label = f.split('-')[1]
+            fileprefix = f.split('.')[0]
 
             for player in [1, 2]:
                 [data,race] = extract_replays(filepath,player,label,feature_dictionary)
                 aligned_data = align_replays(data)
                 
-                training_data.append(aligned_data)
+                training_data[race].append(aligned_data)
 
                     
-                with open(data_directory+'\\'+race+'\\'+label+'.csv', 'wb') as csvfile:
+                with open(data_directory+'\\'+race+'\\'+fileprefix+'.csv', 'wb') as csvfile:
                     csvwriter = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
                     csvwriter.writerows(data)
 
@@ -135,7 +141,7 @@ def process_templates(template_directory,feature_dictionary):
 
     for dirpath,_,filenames in os.walk(template_directory):
         for unit_name in feature_dictionary:
-            print(unit_name)
+            #print(unit_name)
             im = cv2.imread(template_directory+'\\'+unit_name+'.png',0)
             template_dictionary[unit_name]=im
 
