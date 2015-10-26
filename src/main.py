@@ -21,7 +21,11 @@ import sys
 import data_extractor
 #import ipdb
 
-feature_dictionary = {  'Drone':            [0, [50,0,1]],
+
+#The feature_dict contains information about each Starcraft 2 unit.
+#   E.g., a 'Drone' has a unit index of 0, and costs 50 minerals, 0 gas, and 1 supply.
+#   Unit Name: [index],[mineral-cost, gas-cost, supply-cost]]
+feature_dict = {  'Drone':            [0, [50,0,1]],
                         'Extractor':        [1, [0,0,0]],
                         'Hatchery':         [2, [0,0,0]],
                         'SpawningPool':     [3, [0,0,0]],
@@ -67,72 +71,88 @@ feature_dictionary = {  'Drone':            [0, [50,0,1]],
 dir = os.path.dirname(__file__)
 
 def main(): 
-    
-
     print("Loading... Please wait.")
     
-    #### Set data locations
-    replay_directory = os.path.join(dir,'..\\data\\training_replays')
-    training_directory = os.path.join(dir,'..\\data\\training_data')
-    template_directory = os.path.join(dir,'..\\data\\templates')
-    numbers_directory  =os.path.join(dir,'..\\data\\numbers')
+    #Set data locations
+    #   replay_dir contains the replays that are used as training data.
+    #   template_dir contains the template images of the units and buildings on the screen.
+    #   numbers_dir contains the template images of numbers used for reading the game time.
+    replay_dir   = os.path.join(dir,'..\\data\\training_replays')
+    template_dir = os.path.join(dir,'..\\data\\templates')
+    numbers_dir  = os.path.join(dir,'..\\data\\numbers')
+
+    #The output_dir is where training data will be saved (in .csv format) so that it can be read manually
+    #   for debugging purposes, or read by other components.
+    output_dir = os.path.join(dir,'..\\data\\training_data')
     
-    training_data = data_extractor.process_replays(replay_directory,feature_dictionary)
-    template_dictionary = data_extractor.process_templates(template_directory,feature_dictionary)
+    template_dict = data_extractor.process_templates(template_dir,feature_dict)
+    training_data = data_extractor.process_replays(replay_dir,feature_dict,output_dir)
 
-    #feature_dictionary = {0:"Extractor", 1:"Hatchery", 2:"Spawning Pool"}
-
-    #### Initialize class instances
-    sc2c = sc2centaur(training_data, numbers_directory, feature_dictionary, template_dictionary)
+    #Initialize class instances
+    #   sc2c is the "agent" that processes the screen, processes the game data, and generates predictions.
+    #   hook is used for listening to keyboard input.
+    sc2c = sc2centaur(training_data, numbers_dir, feature_dict, template_dict)
     hook = keyboardhook.GlobalInput()
     
-    #### Initialize parameters
-    feature_vector = [0]*len(feature_dictionary)
-    unlocked = True
+    #Initialize the feature_vector.
+    #   It will store the features detected from screenshots of the current game.
+    feature_vector = [0]*len(feature_dict)
+    
+    #Initialize flow control variables
+    loop_unlocked = True
     max_screenshots = 2
     screenshots_taken = 0
     key = None
     
-    print("\nWaiting for image. Take a screenshot\n")
+
+    #The main loop listens for the "print screen" key, until a set number of units or buildings are screen captured.
+    while loop_unlocked:
     
-    #### Until enough screenshots are gathered, listen for the "print screen" key
-    while unlocked:
+        if screenshots_taken == 0:
+            print("\nPlease take screenshots of "+str(max_screenshots)+" enemy units and/or buildings.") 
+        print("\nWaiting for image. Press PrintScreen...\n")
+
+        #Listen for the "print screen" key
         while key != 'Snapshot':
             key = hook.getKey()
         
         key = None
 
-        #### When "print screen" is pressed, read the HUD to identify buildings, here referred to as "features"
+        #(This block of code enables the "--debug" flag. This bypasses the part of the code that captures the current screen image.
+        #Instead, it replaces the image with the image of the user's choosing.)
         if len(sys.argv)==1:
             filename = os.path.join(dir,'..\\observations\\observation.bmp')
         elif sys.argv[1]=='--debug':
             obs_name = input('Enter observation name: ')
             filename = os.path.join(dir,'..\\observations\\'+obs_name+'.bmp')
 
+        #When "print screen" is pressed, read the HUD to identify buildings, here referred to as "features"
         feature_name, feature_index = sc2c.read_hud(filename)
 
+        #If no valid buildings were detected in the screenshot, exit the loop and wait for a new screenshot. 
+        #Otherwise, increment that building's corresponding bin in the feature vector.
         if(feature_name == None):
             print("No valid buildings detected.")
             pass
         else:
-        #### If there's a valid building in the screenshot, increment that building's corresponding bin in the feature vector   
             feature_vector[feature_index]+=1
 
-        #### Read the time and convert it to seconds
+            #Read the time and convert it to a game time (measured in seconds)
             time = sc2c.read_time(filename)
-            seconds = time[0]*60+time[1]*10+time[2]
+            game_time = time[0]*60+time[1]*10+time[2]
 
-        #### If a valid building was captured, increment the "lock timer" by one, so that the loop will stop after the desired number of screenshots    
+            #If a valid building was captured, increment the "lock timer" by one, so that the loop will stop after the desired number of screenshots    
             screenshots_taken+=1
+            #If the maximum number of screenshots is reached, lock the loop by setting "loop_unlocked" to False
             if screenshots_taken>=max_screenshots:
-                unlocked = False
+                loop_unlocked = False
 
             print(feature_name+" detected ("+str(screenshots_taken)+"/"+str(max_screenshots)+" screenshots)")
             
-    #### Using the feature vector generated from the screenshots, compile this information into an "observation," 
-    observation = [seconds, None, None, feature_vector, 'in-game observation']
+    #Using the feature vector generated from the screenshots, compile this information into an "observation."
+    observation = [game_time, None, None, feature_vector, 'in-game observation']
     
-    #### ...and use it to classify the observed in-game behavior of your opponent
+    #Use the observation to classify the observed in-game behavior of the opponent.
     label = sc2c.classify(observation,1)
     print("Predicted build: "+label)
     

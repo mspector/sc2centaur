@@ -18,75 +18,28 @@ import matplotlib.pyplot as plt
 from custom_drawMatches import drawMatches
 
 
+#The sc2centaur class represents an agent that is responsible for reading the player's screen, 
+#   classifying the opponent's behavior, and generating predictions. It is intended as an intelligent
+#   assistant that has "expert knowledge" of Starcraft II, and therefore contains the training data
+#   for the classification. 
 
 class sc2centaur(object):
 
-    def __init__(self,training_data,numbers_directory,feature_dictionary,template_dictionary):
-        "sc2centaur object initialized..."
-
-
+    def __init__(self, training_data, numbers_dir, feature_dict, template_dict):
         self.training_data=training_data
-
         self.n_games = len(self.training_data)
 
         self.numbers=[]
-        for dirpath,_,filenames in os.walk(numbers_directory):
+        for dirpath,_,filenames in os.walk(numbers_dir):
             for f in filenames:
                 im = cv2.imread(os.path.abspath(os.path.join(dirpath, f)),0)
                 self.numbers.append(im)
 
-        self.feature_dictionary=feature_dictionary
-        self.template_dictionary=template_dictionary
+        self.feature_dict=feature_dict
+        self.template_dict=template_dict
 
         self.time = None
-        
-    def classify(self,observation,k):
-        #ipdb.set_trace()
-        time = observation[0]
-        test_feature_vector = [time]+observation[3]
-        training_set = []
-        
-        #This shouldn't be hardcoded in the future
-        race='Zerg'
-        for game in self.training_data[race]:
-            training_feature_vector = [time]+game[time][3]+[game[time][4]]
-            training_set.append(training_feature_vector)
-        
-
-        #ipdb.set_trace()
-        
-        k_nearest_neighbors = sc2helper.getNeighbors(training_set,test_feature_vector, k)    
-        label = sc2helper.getResponse(k_nearest_neighbors)
-        return label
-        
-
-
-    def plot_statistics(self,army_stats,worker_stats):
-        '''
-        Plots stats. Right now only plots army value over time.
-        '''  
-             
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        
-        for game_idx in range(0,len(army_stats)):
-            ax.scatter(range(0,len(army_stats[game_idx])), army_stats[game_idx])
-
-        ax.set_xlabel('Game Time (sec)')
-        ax.set_ylabel('Army Value (minerals + gas)')
-
-        return plt
-
-
-    def test_plugins(self,path_to_replay):
-        replay=sc2reader.load_replay(path_to_replay)
-
-        army_reader = plugins.ArmyTracker()
-        engagement_reader = plugins.EngagementTracker()
-
-        engagement_reader(replay)
-        army_reader(replay)
-
+    
     def read_hud(self,path):
         img = cv2.imread(path,0) # total image
 
@@ -101,9 +54,9 @@ class sc2centaur(object):
 
         hud_globalMax = 0
         feature_id = None
-        for unit_name in self.feature_dictionary.keys():
+        for unit_name in self.feature_dict.keys():
 
-            template = self.template_dictionary[unit_name]
+            template = self.template_dict[unit_name]
             hud_result  = cv2.matchTemplate(hud_img,template,cv2.TM_CCOEFF_NORMED)
             _, hud_max_val, _, _ = cv2.minMaxLoc(hud_result)
             
@@ -113,12 +66,13 @@ class sc2centaur(object):
                 #print('CURRENT BEST MATCH: '+unit_name)
                 #print('SCORE: '+str(hud_globalMax))
         try:        
-            feature_index = self.feature_dictionary[unit_name][0]
+            feature_index = self.feature_dict[unit_name][0]
         except KeyError:
             feature_id = None
             feature_index = None
 
         return feature_id,feature_index
+
 
     def read_time(self,path):
 
@@ -179,6 +133,24 @@ class sc2centaur(object):
 
         return [minute,second1,second2]
 
+    def classify(self,observation,k):
+        #ipdb.set_trace()
+        time = observation[0]
+        test_feature_vector = [time]+observation[3]
+        training_set = []
+        
+        #This shouldn't be hardcoded in the future
+        race='Zerg'
+        for game in self.training_data[race]:
+            training_feature_vector = [time]+game[time][3]+[game[time][4]]
+            training_set.append(training_feature_vector)
+        
+
+        #ipdb.set_trace()
+        
+        k_nearest_neighbors = sc2helper.getNeighbors(training_set,test_feature_vector, k)    
+        label = sc2helper.getResponse(k_nearest_neighbors)
+        return label
 
     def get_statistics(self,observation_label):
         """
@@ -204,11 +176,38 @@ class sc2centaur(object):
             total_army_stats.append(army_stats)
             total_worker_stats.append(worker_stats)
         return total_army_stats,total_worker_stats
-    
+
+    def plot_statistics(self,army_stats,worker_stats):
+        '''
+        Plots stats. Right now only plots army value over time.
+        '''  
+             
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        
+        for game_idx in range(0,len(army_stats)):
+            ax.scatter(range(0,len(army_stats[game_idx])), army_stats[game_idx])
+
+        ax.set_xlabel('Game Time (sec)')
+        ax.set_ylabel('Army Value (minerals + gas)')
+
+        return plt
+
+
 
     '''
     I'm not sure which of these classes below are actually used anymore
-    '''
+
+
+    def test_plugins(self,path_to_replay):
+        replay=sc2reader.load_replay(path_to_replay)
+
+        army_reader = plugins.ArmyTracker()
+        engagement_reader = plugins.EngagementTracker()
+
+        engagement_reader(replay)
+        army_reader(replay)
+
     def get_feature(self,f):
         all_features=[]
         for game in range(0,len(self.training_data)):
@@ -220,10 +219,8 @@ class sc2centaur(object):
         return all_features
 
     def plot_training_data(self):
-        '''
-        ONLY WORKS with three dimensional features!
-
-        '''  
+        ##ONLY WORKS with three dimensional features!
+  
 
         fig = plt.figure()
         ax = fig.add_subplot(111, projection='3d')
@@ -242,7 +239,6 @@ class sc2centaur(object):
         plt.show()
 
 
-    '''
     def find_nexus(self,path):
         print("Identifying nexus...")
         self.nexus = False

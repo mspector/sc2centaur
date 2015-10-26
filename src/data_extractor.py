@@ -13,7 +13,48 @@ from spawningtool.parser import GameTimeline
 
 dir = os.path.dirname(__file__)
 
-def extract_replays(replay_file,player_number,label,feature_dictionary):
+def process_templates(template_dir,feature_dict):
+    template_dict={}
+
+    for dirpath,_,filenames in os.walk(template_dir):
+        for unit_name in feature_dict:
+            #print(unit_name)
+            im = cv2.imread(template_dir+'\\'+unit_name+'.png',0)
+            template_dict[unit_name]=im
+
+    return template_dict
+
+def process_replays(replay_dir,feature_dict,output_dir):
+    
+    #ipdb.set_trace()
+    training_data={'Protoss':[], 'Zerg':[], 'Terran':[]}
+    output_dir = os.path.join(dir,'..\\data\\training_data')
+
+    for dirpath,_,filenames in os.walk(replay_dir):
+        for f in filenames:
+            filepath = os.path.abspath(os.path.join(dirpath, f))
+            #print(filepath)
+            
+            #Replays should be in the following format:
+            #X-build.SC2Replay
+            #Where X is P, Z, or T 
+            label = f.split('-')[1]
+            fileprefix = f.split('.')[0]
+
+            for player in [1, 2]:
+                [data,race] = extract_replays(filepath,player,label,feature_dict)
+                aligned_data = align_replays(data)
+                
+                training_data[race].append(aligned_data)
+
+                    
+                with open(output_dir+'\\'+race+'\\'+fileprefix+'.csv', 'wb') as csvfile:
+                    csvwriter = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
+                    csvwriter.writerows(data)
+
+    return training_data
+
+def extract_replays(replay_file,player_number,label,feature_dict):
     '''
     The '' function takes (1) a replay file and (2) a player number and
     returns the observation vector for that game and that player.
@@ -38,7 +79,7 @@ def extract_replays(replay_file,player_number,label,feature_dictionary):
     
     # Initialize the interval observation array. This is the observation vector
     # for a single slice in starcraft time
-    observation = [0]*len(feature_dictionary)
+    observation = [0]*len(feature_dict)
 
     # The build index is the index of the build command, 
     # where build index=0 is the 0th action taken in the build order
@@ -59,7 +100,7 @@ def extract_replays(replay_file,player_number,label,feature_dictionary):
         # This 'try' statement checks to see if the current_unit_str is a unit/building,
         # or another type (upgrade, etc.), and increments the corresponding bin by +1 if valid
         try:
-            current_unit = feature_dictionary[current_unit_str];
+            current_unit = feature_dict[current_unit_str];
             current_unit_bin = current_unit[0]
             observation[current_unit_bin]+=1
 
@@ -106,52 +147,9 @@ def align_replays(total_observations):
         #print(aligned_observations[current_time])
     return aligned_observations
 
-def process_replays(replay_directory,feature_dictionary):
-    
-    #ipdb.set_trace()
-    training_data={'Protoss':[], 'Zerg':[], 'Terran':[]}
-    data_directory = os.path.join(dir,'..\\data\\training_data')
-
-    for dirpath,_,filenames in os.walk(replay_directory):
-        for f in filenames:
-            filepath = os.path.abspath(os.path.join(dirpath, f))
-            #print(filepath)
-            
-            #Replays should be in the following format:
-            #X-build.SC2Replay
-            #Where X is P, Z, or T 
-            label = f.split('-')[1]
-            fileprefix = f.split('.')[0]
-
-            for player in [1, 2]:
-                [data,race] = extract_replays(filepath,player,label,feature_dictionary)
-                aligned_data = align_replays(data)
-                
-                training_data[race].append(aligned_data)
-
-                    
-                with open(data_directory+'\\'+race+'\\'+fileprefix+'.csv', 'wb') as csvfile:
-                    csvwriter = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                    csvwriter.writerows(data)
-
-    return training_data
-
-def process_templates(template_directory,feature_dictionary):
-    template_dictionary={}
-
-    for dirpath,_,filenames in os.walk(template_directory):
-        for unit_name in feature_dictionary:
-            #print(unit_name)
-            im = cv2.imread(template_directory+'\\'+unit_name+'.png',0)
-            template_dictionary[unit_name]=im
-
-    return template_dictionary
-
-
-
 def main():
-    replay_directory = 'C:\\Users\\Michael\\Documents\\projects\\sc2centaur\\data\\training_replays'
-    process_replays(replay_directory)
+    replay_dir = 'C:\\Users\\Michael\\Documents\\projects\\sc2centaur\\data\\training_replays'
+    process_replays(replay_dir)
 
 if __name__ == '__main__':
     main()
