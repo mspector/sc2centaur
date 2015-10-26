@@ -7,7 +7,7 @@ import numpy as np
 import plugins
 import cv2
 #import ipdb
-from sc2helper import *
+import sc2helper
 from spawningtool.parser import GameTimeline
 
 
@@ -92,7 +92,7 @@ def extract_replays(replay_file,player_number,label,feature_dict):
     for x in range(0,len(buildOrder)):
         #TODO: Add a "loading" bar... figure out how to do this
         time = (buildOrder[build_index]['time'])
-        time = time_string_to_decimals(time)
+        time = sc2helper.time_string_to_decimals(time)
 
         # Add the current build command to this interval's observation vector
         current_unit_str = str(buildOrder[build_index]['name'])

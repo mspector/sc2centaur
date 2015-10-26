@@ -8,6 +8,7 @@ import datetime
 import math
 import operator
 import cv2
+
 def time_string_to_decimals(hhmmss):
     [minutes, seconds] = [int(x) for x in hhmmss.split(':')]
     #time = datetime.timedelta(minutes=minutes, seconds=seconds)
@@ -28,13 +29,6 @@ def csv_read(files):
         training_data.append(vectors)
     return training_data
 
-def euclideanDistance(instance1, instance2, length):
-    distance = 0
-    for x in range(length):
-        distance += pow((instance1[x]-instance2[x]),2)
-    return math.sqrt(distance) 
-
-
 def getNeighbors(trainingSet, testInstance, k):
     #ipdb.set_trace()
     distances = []
@@ -48,6 +42,14 @@ def getNeighbors(trainingSet, testInstance, k):
         neighbors.append(distances[x][0])
         
     return neighbors
+
+
+def euclideanDistance(instance1, instance2, length):
+    distance = 0
+    for x in range(length):
+        distance += pow((instance1[x]-instance2[x]),2)
+    return math.sqrt(distance) 
+
 
 def getResponse(neighbors):
     classVotes = {}
