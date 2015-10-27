@@ -4,7 +4,7 @@ Starcraft Assistive AI: sc2centaur class
 ==================================
 
 """
-#import ipdb
+import ipdb
 import numpy as np
 import cv2
 import os
@@ -20,13 +20,40 @@ from custom_drawMatches import drawMatches
 
 #The sc2centaur class represents an agent that is responsible for reading the player's screen, 
 #   classifying the opponent's behavior, and generating predictions. It is intended as an intelligent
-#   assistant that has "expert knowledge" of Starcraft II, and therefore contains the training data
-#   for the classification. 
+#   assistant that has "expert knowledge" of Starcraft II player behavior, and therefore contains the 
+#   training data for the classification. 
+
+
+#Set data locations
+#   replay_dir contains the replays that are used as training data.
+#   template_dir contains the template images of the units and buildings on the screen.
+#   numbers_dir contains the template images of numbers used for reading the game time.
+dir = os.path.dirname(__file__)
+replay_dir   = os.path.join(dir,'..\\data\\training_replays')
+template_dir = os.path.join(dir,'..\\data\\templates')
+numbers_dir  = os.path.join(dir,'..\\data\\numbers')
+training_data_dir = os.path.join(dir,'..\\data\\training_data')
 
 class sc2centaur(object):
 
-    def __init__(self, training_data, numbers_dir, feature_dict, template_dict):
-        self.training_data=training_data
+
+    def __init__(self, feature_dict):
+        
+
+        #TODO: 
+        #The SC2Centaur should read data from the csv files. 
+        #Remove the line below and replace it with a .csv reading function.
+        #pca.py will hold the function that writes the replays to .csv format.
+        self.feature_dict=feature_dict
+        
+        self.training_data={'Protoss': [], 'Terran': [], 'Zerg': []}
+        for race in ['Protoss','Terran','Zerg']:
+            race_dir = os.path.join(training_data_dir,race)
+            for dirpath,_,filenames in os.walk(race_dir):
+                for f in filenames:
+                    replay_data = sc2helper.csv_read(os.path.join(race_dir,f))
+                    self.training_data[race].append(replay_data)
+
         self.n_games = len(self.training_data)
 
         self.numbers=[]
@@ -35,8 +62,12 @@ class sc2centaur(object):
                 im = cv2.imread(os.path.abspath(os.path.join(dirpath, f)),0)
                 self.numbers.append(im)
 
-        self.feature_dict=feature_dict
-        self.template_dict=template_dict
+        self.template_dict={}
+        for dirpath,_,filenames in os.walk(template_dir):
+            for unit_name in feature_dict:
+                #print(unit_name)
+                im = cv2.imread(template_dir+'\\'+unit_name+'.png',0)
+                self.template_dict[unit_name]=im
 
         self.time = None
     
@@ -133,17 +164,22 @@ class sc2centaur(object):
 
         return [minute,second1,second2]
 
+    #classify needs some work.
+    #should it ingest an 'observation', or a bunch of variables that make up an observation? that might make it clearer what's happening inside
+    #The classification algorithm may be flawed. Right now it does K-nearest neighbors on a training set consisting exclusively of feature 
+    #vectors that happen at the exact same game time.
     def classify(self,observation,k):
-        #ipdb.set_trace()
+        ipdb.set_trace()
         time = observation[0]
-        test_feature_vector = [time]+observation[3]
+        test_feature_vector = [time]+observation[3]#observation[3] is the feature vector
         training_set = []
         
         #This shouldn't be hardcoded in the future
         race='Zerg'
-        for game in self.training_data[race]:
-            training_feature_vector = [time]+game[time][3]+[game[time][4]]
-            training_set.append(training_feature_vector)
+        for games in self.training_data[race]:
+            for g in games:
+                training_feature_vector = [time]+g[time][3]+[g[time][4]]
+                training_set.append(training_feature_vector)
         
 
         #ipdb.set_trace()

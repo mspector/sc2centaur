@@ -15,83 +15,31 @@ Press "Escape" to quit.
 print(__doc__)
 
 from sc2centaur import *
+import sc2helper
 import keyboardhook
 import os
 import sys
-import data_extractor
 #import ipdb
 
 
-#The feature_dict contains information about each Starcraft 2 unit.
-#   E.g., a 'Drone' has a unit index of 0, and costs 50 minerals, 0 gas, and 1 supply.
-#   Unit Name: [index],[mineral-cost, gas-cost, supply-cost]]
-feature_dict = {  'Drone':            [0, [50,0,1]],
-                        'Extractor':        [1, [0,0,0]],
-                        'Hatchery':         [2, [0,0,0]],
-                        'SpawningPool':     [3, [0,0,0]],
-                        'Zergling':         [4, [50,0,1]]
-                        }   
 
-"""
-                        'Probe':            [0, [50,0,1]],
-                        'MothershipCore':   [1, [100,100,2]],
-                        'Mothership':       [2, [400,400,8]],
-                        'Zealot':           [3, [100,0,2]],
-                        'Stalker':          [4, [125,50,2]],
-                        'Sentry':           [5, [50,100,2]],
-                        'HighTemplar':      [6, [50,150,2]],
-                        'DarkTemplar':      [7, [125,125,2]],
-                        'Archon':           [8, [175,275,4]],
-                        'Immortal':         [9, [250,100,4]],
-                        'Colossus':         [10,[300,200,6]],
-                        'Observer':         [11,[25,75,1]],
-                        'Warp Prism':       [12,[200,0,2]],
-                        'Phoenix':          [13,[150,100,2]],
-                        'Void Ray':         [14,[250,150,4]],
-                        'Oracle':           [15,[150,150,3]],
-                        'Carrier':          [16,[350,250,6]],
-                        'Tempest':          [17,[300,200,4]],
-                        'PhotonCannon':     [18,[150,0,0]],
-                        'Nexus':            [19,[0,0,0]],
-                        'Pylon':            [20,[0,0,0]],
-                        'Assimilator':      [21,[0,0,0]],
-                        'Gateway':          [22,[0,0,0]],
-                        'Forge':            [23,[0,0,0]],
-                        'CyberneticsCore':  [24,[0,0,0]],
-                        'RoboticsFacility': [25,[0,0,0]],   
-                        'Stargate':         [26,[0,0,0]],
-                        'TwilightCouncil':  [27,[0,0,0]],
-                        'RoboticsBay':      [28,[0,0,0]],
-                        'FleetBeacon':      [29,[0,0,0]],
-                        'TemplarArchives':  [30,[0,0,0]],
-                        'DarkShrine':       [31,[0,0,0]],
-"""
                     
-
+feature_dict = sc2helper.get_feature_dict()
 dir = os.path.dirname(__file__)
 
 def main(): 
     print("Loading... Please wait.")
     
-    #Set data locations
-    #   replay_dir contains the replays that are used as training data.
-    #   template_dir contains the template images of the units and buildings on the screen.
-    #   numbers_dir contains the template images of numbers used for reading the game time.
-    replay_dir   = os.path.join(dir,'..\\data\\training_replays')
-    template_dir = os.path.join(dir,'..\\data\\templates')
-    numbers_dir  = os.path.join(dir,'..\\data\\numbers')
+
 
     #The output_dir is where training data will be saved (in .csv format) so that it can be read manually
     #   for debugging purposes, or read by other components.
     output_dir = os.path.join(dir,'..\\data\\training_data')
     
-    template_dict = data_extractor.process_templates(template_dir,feature_dict)
-    training_data = data_extractor.process_replays(replay_dir,feature_dict,output_dir)
-
     #Initialize class instances
     #   sc2c is the "agent" that processes the screen, processes the game data, and generates predictions.
     #   hook is used for listening to keyboard input.
-    sc2c = sc2centaur(training_data, numbers_dir, feature_dict, template_dict)
+    sc2c = sc2centaur(feature_dict)
     hook = keyboardhook.GlobalInput()
     
     #Initialize the feature_vector.
@@ -150,6 +98,7 @@ def main():
             print(feature_name+" detected ("+str(screenshots_taken)+"/"+str(max_screenshots)+" screenshots)")
             
     #Using the feature vector generated from the screenshots, compile this information into an "observation."
+    #TODO: Is "observation" really even necessary?
     observation = [game_time, None, None, feature_vector, 'in-game observation']
     
     #Use the observation to classify the observed in-game behavior of the opponent.

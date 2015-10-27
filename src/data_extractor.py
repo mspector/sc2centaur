@@ -10,30 +10,22 @@ import cv2
 import sc2helper
 from spawningtool.parser import GameTimeline
 
-
+feature_dict=sc2helper.get_feature_dict()
 dir = os.path.dirname(__file__)
-
-def process_templates(template_dir,feature_dict):
-    template_dict={}
-
-    for dirpath,_,filenames in os.walk(template_dir):
-        for unit_name in feature_dict:
-            #print(unit_name)
-            im = cv2.imread(template_dir+'\\'+unit_name+'.png',0)
-            template_dict[unit_name]=im
-
-    return template_dict
+replay_dir   = os.path.join(dir,'..\\data\\training_replays')
+template_dir = os.path.join(dir,'..\\data\\templates')
+numbers_dir  = os.path.join(dir,'..\\data\\numbers')
+training_data_dir = os.path.join(dir,'..\\data\\training_data')
 
 def process_replays(replay_dir,feature_dict,output_dir):
     
-    #ipdb.set_trace()
     training_data={'Protoss':[], 'Zerg':[], 'Terran':[]}
     output_dir = os.path.join(dir,'..\\data\\training_data')
 
     for dirpath,_,filenames in os.walk(replay_dir):
         for f in filenames:
             filepath = os.path.abspath(os.path.join(dirpath, f))
-            #print(filepath)
+            print(filepath)
             
             #Replays should be in the following format:
             #X-build.SC2Replay
@@ -50,7 +42,7 @@ def process_replays(replay_dir,feature_dict,output_dir):
                     
                 with open(output_dir+'\\'+race+'\\'+fileprefix+'.csv', 'wb') as csvfile:
                     csvwriter = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                    csvwriter.writerows(data)
+                    csvwriter.writerows(aligned_data)
 
     return training_data
 
@@ -148,8 +140,7 @@ def align_replays(total_observations):
     return aligned_observations
 
 def main():
-    replay_dir = 'C:\\Users\\Michael\\Documents\\projects\\sc2centaur\\data\\training_replays'
-    process_replays(replay_dir)
+    process_replays(replay_dir,feature_dict,training_data_dir)
 
 if __name__ == '__main__':
     main()
