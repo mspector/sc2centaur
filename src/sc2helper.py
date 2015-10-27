@@ -17,7 +17,7 @@ feature_dict = {        'Drone':            [0, [50,0,1]],
                         'Hatchery':         [2, [0,0,0]],
                         'SpawningPool':     [3, [0,0,0]],
                         'Zergling':         [4, [50,0,1]]
-                        }   
+                        }                       
 
 """
                         'Probe':            [0, [50,0,1]],

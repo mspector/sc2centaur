@@ -1,35 +1,17 @@
-import data_extractor
+import numpy as np
 
-#Set data locations
-#   replay_dir contains the replays that are used as training data.
-#   template_dir contains the template images of the units and buildings on the screen.
-#   numbers_dir contains the template images of numbers used for reading the game time.
-def process_replays(replay_dir,feature_dict,output_dir):
-    
-    #ipdb.set_trace()
-    training_data={'Protoss':[], 'Zerg':[], 'Terran':[]}
-    output_dir = os.path.join(dir,'..\\data\\training_data')
+np.random.seed(1)
 
-    for dirpath,_,filenames in os.walk(replay_dir):
-        for f in filenames:
-            filepath = os.path.abspath(os.path.join(dirpath, f))
-            #print(filepath)
-            
-            #Replays should be in the following format:
-            #X-build.SC2Replay
-            #Where X is P, Z, or T 
-            label = f.split('-')[1]
-            fileprefix = f.split('.')[0]
+mu_vec1 = np.array([0,0,0])
+cov_mat1 = np.array([1,0,0],[0,1,0],[0,0,1])
+class1_sample = np.random.multivariate_normal(mu_vec1, cov_mat1, 20).T
+assert class1_sample.shape == (3,20), "The matrix has not the dimensions 3x20"
 
-            for player in [1, 2]:
-                [data,race] = extract_replays(filepath,player,label,feature_dict)
-                aligned_data = align_replays(data)
-                
-                training_data[race].append(aligned_data)
+mu_vec2 = np.array([1,1,1])
+cov_mat2 = np.array([1,0,0],[0,1,0],[0,0,1])
+class2_sample = np.random.multivariate_normal(mu_vec2, cov_mat2, 20).T
+assert class2_sample.shape == (3,20), "The matrix has not the dimensions 3x20"
 
-                    
-                with open(output_dir+'\\'+race+'\\'+fileprefix+'.csv', 'wb') as csvfile:
-                    csvwriter = csv.writer(csvfile, delimiter=' ',quotechar='|', quoting=csv.QUOTE_MINIMAL)
-                    csvwriter.writerows(data)
-
-    return training_data
+from matplotlib import pyplot as pyplot
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import proj3d
