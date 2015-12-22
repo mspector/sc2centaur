@@ -29,10 +29,10 @@ from custom_drawMatches import drawMatches
 #   template_dir contains the template images of the units and buildings on the screen.
 #   numbers_dir contains the template images of numbers used for reading the game time.
 dir = os.path.dirname(__file__)
-replay_dir   = os.path.join(dir,'..\\data\\training_replays')
-template_dir = os.path.join(dir,'..\\data\\templates')
-numbers_dir  = os.path.join(dir,'..\\data\\numbers')
-training_data_dir = os.path.join(dir,'..\\data\\training_data')
+replay_dir   = os.path.join(dir,'..','data','training_replays')
+template_dir = os.path.join(dir,'..','data','templates')
+numbers_dir  = os.path.join(dir,'..','data','numbers')
+training_data_dir = os.path.join(dir,'..','data','training_data')
 
 class sc2centaur(object):
 
@@ -66,14 +66,13 @@ class sc2centaur(object):
         for dirpath,_,filenames in os.walk(template_dir):
             for unit_name in feature_dict:
                 #print(unit_name)
-                im = cv2.imread(template_dir+'\\'+unit_name+'.png',0)
+                im = cv2.imread(os.path.join(template_dir,unit_name+'.png'), 0)
                 self.template_dict[unit_name]=im
 
         self.time = None
     
     def read_hud(self,path):
         img = cv2.imread(path,0) # total image
-
         x_min = 2740
         x_max = 2980
         y_min = 898
@@ -82,7 +81,6 @@ class sc2centaur(object):
         hud_img = img[y_min:y_max,x_min:x_max]
 
         #cv2.imshow("hud",hud_img)
-
         hud_globalMax = 0
         feature_id = None
         for unit_name in self.feature_dict.keys():
@@ -139,14 +137,6 @@ class sc2centaur(object):
             minute_min_val, minute_max_val, a, b = cv2.minMaxLoc(minute_result)
             second1_min_val, second1_max_val, a, b = cv2.minMaxLoc(second1_result)
             second2_min_val, second2_max_val, a, b = cv2.minMaxLoc(second2_result)
-            
-            '''
-            print(minute_result)
-            print("Number:"+str(self.numbers[i])+"\n")
-            print(np.shape(self.numbers[i]))
-            print("Image number:" +str(minute_img)+"\n")
-            print(np.shape(minute_img))
-            '''
 
             if minute_max_val > minute_globalMax:
                 minute_globalMax = minute_max_val
