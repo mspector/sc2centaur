@@ -19,17 +19,18 @@ import sc2helper
 import os
 import sys
 #import ipdb
-
-
-
                     
 feature_dict = sc2helper.get_feature_dict()
 dir = os.path.dirname(__file__)
 
+class observation(object):
+    def __init__(self):
+        self.time = None
+        self.feature_vector = None
+        self.label = None
+
 def osxtest(): 
     print("Loading... Please wait.")
-    
-
 
     #The output_dir is where training data will be saved (in .csv format) so that it can be read manually
     #   for debugging purposes, or read by other components.
@@ -39,7 +40,6 @@ def osxtest():
     #   sc2c is the "agent" that processes the screen, processes the game data, and generates predictions.
     sc2c = sc2centaur(feature_dict)
 
-    
     #Initialize the feature_vector.
     #   It will store the features detected from screenshots of the current game.
     feature_vector = [0]*len(feature_dict)
@@ -84,18 +84,14 @@ def osxtest():
             
     #Using the feature vector generated from the screenshots, compile this information into an "observation."
     #TODO: Is "observation" really even necessary?
-    observation = [game_time, None, None, feature_vector, 'in-game observation']
+    #observation = [game_time, None, None, feature_vector, 'in-game observation']
+    obs = observation()
+    obs.time = game_time
+    obs.feature_vector = feature_vector
     
     #Use the observation to classify the observed in-game behavior of the opponent.
-    label = sc2c.classify(observation,1)
+    label = sc2c.classify(obs,1)
     print("Predicted build: "+label)
-    
-    #### Then gather statistics about similar builds and provide data about army value over time.
-    army_stats, worker_stats = sc2c.get_statistics(label)
-    plt = sc2c.plot_statistics(army_stats,worker_stats)
-
-    plt.show()
-
 
 if __name__ == '__main__':
     osxtest()
