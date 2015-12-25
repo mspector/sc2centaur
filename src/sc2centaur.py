@@ -174,8 +174,8 @@ class sc2centaur(object):
 
         #ipdb.set_trace()
         
-        k_nearest_neighbors = sc2helper.getNeighbors(training_set,test_feature_vector, k)    
-        label = sc2helper.getResponse(k_nearest_neighbors)
+        k_nearest_neighbors = knn.getNeighbors(training_set,test_feature_vector, k)    
+        label = knn.getResponse(k_nearest_neighbors)
         return label
 
     def get_statistics(self,observation_label):
