@@ -5,6 +5,7 @@ Starcraft Assistive AI: K-nearest neighbors implementation for classification
 
 """
 
+import dtw
 
 def getNeighbors(trainingSet, testInstance, k):
     #ipdb.set_trace()
