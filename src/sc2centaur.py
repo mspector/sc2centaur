@@ -160,8 +160,8 @@ class sc2centaur(object):
     #vectors that happen at the exact same game time.
     def classify(self,observation,k):
         ipdb.set_trace()
-        time = observation[0]
-        test_feature_vector = [time]+observation[3]#observation[3] is the feature vector
+        time = observation.time
+        test_feature_vector = [time]+observation[3] #observation[3] is the feature vector
         training_set = []
         
         #This shouldn't be hardcoded in the future
