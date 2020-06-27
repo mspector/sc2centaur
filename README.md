@@ -1,6 +1,9 @@
-# SC2 Centaur
+**Edited 2020-06-27**
 
-This README is being written years after the last time I worked on this project. It's pretty amateurish, and likely doesn't work anymore, but it was the first programming project that I undertook for purely personal reasons, and so it holds a special place in my heart.
+This README is being written years after the last time I worked on this project. It's amateurish, and likely doesn't work anymore, but it was the first programming project that I undertook for purely personal reasons, and so it holds a special place in my heart. This isn't an accurate representation of my current programming ability.
+
+
+# SC2 Centaur
 
 The term "centaur" comes from the idea of [centaur (or advanced) chess](https://en.m.wikipedia.org/wiki/Advanced_chess), a form of chess in which human-computer teams play chess against each other. This program was intended to "read" the player's screen and provide strategic insights based on what it "saw".
 
